@@ -1,22 +1,94 @@
 const express = require("express");
-const connectDB = require("./config/database")
+const connectDB = require("./config/database");
 const app = express();
 const User = require("./models/user");
+const {validateSignUpData} = require("./utils/validation");
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json());
+app.use(cookieParser());
+
 
 app.post("/signup", async (req, res) => {
-    // Creating a new instance of the user model
-    const user = new User(req.body);
-
     try{
+        // Validation of data
+        validateSignUpData(req);
+
+        const {firstName, lastName, emailId, password} = req.body;
+        // Encrypt the password
+        const passwordHash = await bcrypt.hash(password, 10);
+        console.log(passwordHash);
+
+        // Creating a new instance of the user model
+        const user = new User({firstName, lastName, emailId, password: passwordHash});
+
         await user.save();
         res.send("User added successfully!!")
     }
     catch(err){
-        res.status(400).send("Error saving the user:"+ err.message);
+        res.status(400).send("ERROR:"+ err.message);
     }
 });
+
+
+app.post("/login", async (req, res) => {
+    try{
+        const {emailId, password} = req.body;
+
+        const user = await User.findOne({emailId: emailId});
+        if(!user){
+            throw new Error("Invalid Credentials");
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if(isPasswordValid){
+            // Create a JWT Token
+            const token = await jwt.sign({_id: user._id}, "DEV@TINDER$790");
+
+            // Add the token to cookie and send the response back to the user
+            res.cookie("token", token);
+            res.send("Login Successful!!");
+        }
+        else{
+            throw new Error("Invalid Credentials");
+        }
+    }
+    catch(err){
+        res.status(400).send("ERROR: " + err.message);
+    }
+});
+
+
+app.get("/profile", async (req, res) => {
+    try{
+        const cookies = req.cookies;
+
+        const {token} = cookies;
+    
+        if(!token){
+            throw new Error("Invalid Token");
+        }
+    
+        // Validate my token
+        const decodedMessage = await jwt.verify(token, "DEV@TINDER$790");
+    
+        const {_id} = decodedMessage;
+    
+        const user = await User.findById(_id);
+        if(!user){
+            throw new Error("User does not exist");
+        }
+    
+        res.send(user);
+    }
+    catch(err){
+        res.status(400).send("ERROR: " + err.message);
+    }
+});
+
 
 // GET user by email
 app.get("/user", async (req, res) => {
@@ -43,6 +115,7 @@ app.get("/user", async (req, res) => {
     }
 });
 
+
 // Feed API - GET /feed - get all the users from the database
 app.get("/feed", async (req, res) => {
     try{
@@ -53,6 +126,7 @@ app.get("/feed", async (req, res) => {
         res.status(400).send("Something went wrong!!");
     }
 });
+
 
 // Delete data of the user
 app.delete("/user", async (req, res) => {
@@ -66,6 +140,7 @@ app.delete("/user", async (req, res) => {
         res.status(400).send("Something went wrong!!");
     }
 });
+
 
 // Update data of the user
 app.patch("/user/:userId", async (req, res) => {
@@ -95,6 +170,7 @@ app.patch("/user/:userId", async (req, res) => {
         res.status(400).send("UPDATE FAILED:" + err.message);
     }
 });
+
 
 connectDB().then(() => {
     console.log("Database Connected Successfully...");
