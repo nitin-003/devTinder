@@ -8,7 +8,15 @@ const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/requests");
 const userRouter = require("./routes/userRouter");
 const models = require("./models/user");
+const cors = require("cors");
 
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+        credentials: true,
+    })
+);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -27,5 +35,7 @@ connectDB()
 .catch(err => {
     console.log("Database Cannot Connected.")
 })
+
+
 
 
