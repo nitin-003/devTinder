@@ -14,7 +14,7 @@ require("dotenv").config();
 
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: "https://dev-tinder-frontend-orpin.vercel.app/",
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
         credentials: true,
     })
