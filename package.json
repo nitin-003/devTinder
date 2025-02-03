@@ -1,27 +1,26 @@
 {
   "name": "devtinder",
   "version": "1.0.0",
-  "description": "tinder for devs",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.js"
   },
-  "keywords": [
-    "nodejs"
-  ],
-  "author": "Nitin Pathak",
+  "keywords": [],
+  "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.7.2",
-    "nodemon": "^3.1.7",
+    "mongoose": "^8.9.6",
     "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }
-
-

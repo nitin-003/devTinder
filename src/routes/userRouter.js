@@ -5,7 +5,7 @@ const ConnectionRequest = require("../models/connectionRequest");
 const User = require("../models/user");
 
 // Get all the pending connection request for the loggedIn User
-userRouter.get("/user/requests/received", userAuth, async (req, res) => {
+userRouter.get("/requests/received", userAuth, async (req, res) => {
     try{
         const loggedInUser = req.user;
 
@@ -24,7 +24,7 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
     }
 });
 
-userRouter.get("/user/connections", userAuth, async (req, res) => {
+userRouter.get("/connections", userAuth, async (req, res) => {
     try{
         const loggedInUser = req.user;
         const connectionRequests = await ConnectionRequest.find({
@@ -51,6 +51,10 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 userRouter.get("/feed", userAuth, async (req, res) => {
     try{
         const loggedInUser = req.user;
+        // console.log(loggedInUser)
+        if(!loggedInUser){
+            throw new Error("no user found!");
+        }
 
         const page = parseInt(req.query.page) || 1;
         let limit = parseInt(req.query.limit) || 10;
@@ -81,7 +85,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         res.json({data: users});
     }
     catch(err){
-        res.status(400).json({ message: err.message });
+        return res.status(400).json({ message: err.message });
     }
 });
 

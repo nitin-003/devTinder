@@ -10,6 +10,8 @@ const userRouter = require("./routes/userRouter");
 const models = require("./models/user");
 const cors = require("cors");
 
+require("dotenv").config();
+
 app.use(
     cors({
         origin: "http://localhost:5173",
@@ -20,10 +22,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/", authRouter);
-app.use("/", profileRouter);
-app.use("/", requestRouter);
-app.use("/", userRouter);
+app.use("/auth", authRouter);
+app.use("/profile", profileRouter);
+app.use("/request", requestRouter);
+app.use("/user", userRouter);
 
 connectDB()
 .then(() => {
@@ -33,7 +35,7 @@ connectDB()
     });
 })
 .catch(err => {
-    console.log("Database Cannot Connected.")
+    console.log("Database Cannot Connected.", err);
 })
 
 
