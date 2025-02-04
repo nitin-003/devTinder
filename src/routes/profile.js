@@ -6,7 +6,6 @@ const {validateEditProfileData} = require("../utils/validation");
 
 profileRouter.get("/view", userAuth, async (req, res) => {
     try{
-        console.log(req.user);
         const user = req.user;
         res.send(user);
     }
@@ -33,7 +32,6 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
 });
 
 module.exports = profileRouter;
-
 
 
 
