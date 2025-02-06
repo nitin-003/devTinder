@@ -14,7 +14,7 @@ require("dotenv").config();
 
 app.use(
     cors({
-        origin: "https://dev-tinder-frontend-orpin.vercel.app/",
+        origin: "http://localhost:5173",
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
         credentials: true,
     })
@@ -22,22 +22,20 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/auth", authRouter);
-app.use("/profile", profileRouter);
-app.use("/request", requestRouter);
-app.use("/user", userRouter);
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestRouter);
+app.use("/", userRouter);
 
 connectDB()
 .then(() => {
     console.log("Database Connected Successfully...");
-    app.listen(3000, () => {
+    app.listen(process.env.PORT, () => {
         console.log("Server is listening successfully on port 3000");
     });
 })
 .catch(err => {
-    console.log("Database Cannot Connected.", err);
+    console.log("Database cannot be connected.", err);
 })
-
-
 
 

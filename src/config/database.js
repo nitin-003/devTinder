@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
-    const connectionString = process.env.CONNECTION_STRING;
-    await mongoose.connect(connectionString);
+    await mongoose.connect(process.env.DB_CONNECTION_SECRET,
+    { writeConcern: { w: "majority" } }
+    );
 }
 
-module.exports = connectDB;
 
+module.exports = connectDB;
 
 
 
