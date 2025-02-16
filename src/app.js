@@ -9,6 +9,9 @@ const requestRouter = require("./routes/requests");
 const userRouter = require("./routes/userRouter");
 const models = require("./models/user");
 const cors = require("cors");
+const http = require("http");
+const initializeSocket = require("./utils/socket");
+const chatRouter = require("./routes/chat");
 
 require("dotenv").config();
 
@@ -26,16 +29,22 @@ app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
+app.use("/", chatRouter);
+
+const server = http.createServer(app);
+initializeSocket(server);
 
 connectDB()
 .then(() => {
     console.log("Database Connected Successfully...");
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
         console.log("Server is listening successfully on port 3000");
     });
 })
 .catch(err => {
     console.log("Database cannot be connected.", err);
 })
+
+
 
 
