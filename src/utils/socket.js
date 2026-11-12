@@ -1,33 +1,75 @@
 const socket = require("socket.io");
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 const { Chat } = require("../models/chat.js");
-const ConnectionRequest = require("../models/connectionRequest.js");
+const User = require("../models/user.js");
+const { areConnected } = require("./connections.js");
 
 const getSecretRoomId = (userId, targetUserId) => {
     return crypto.createHash("sha256").update([userId, targetUserId].sort().join("$")).digest("hex");
 };
 
+// Read the "token" cookie from the socket handshake (cookie-parser only covers HTTP routes)
+const getTokenFromCookie = (cookieHeader = "") => {
+    const pair = cookieHeader.split(";").map((c) => c.trim()).find((c) => c.startsWith("token="));
+    return pair ? decodeURIComponent(pair.slice("token=".length)) : null;
+};
+
 const initializeSocket = (server) => {
     const io = socket(server, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+            credentials: true,
         },
     });
 
+    // Authenticate every connection with the same JWT cookie the REST API uses
+    io.use(async (socket, next) => {
+        try{
+            const token = getTokenFromCookie(socket.handshake.headers.cookie);
+            if(!token){
+                return next(new Error("Please Login!"));
+            }
+
+            const { _id } = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findById(_id).select("firstName lastName");
+            if(!user){
+                return next(new Error("User not found"));
+            }
+
+            socket.user = user;
+            next();
+        }
+        catch(err){
+            next(new Error("Unauthorized"));
+        }
+    });
+
     io.on("connection", (socket) => {
-        socket.on("joinChat", ({firstName, userId, targetUserId}) => {
-            const roomId = getSecretRoomId(userId, targetUserId);
+        // Identity always comes from the verified token, never from client payloads
+        const userId = socket.user._id.toString();
 
-            console.log(firstName +  " joined room " + roomId);
-            socket.join(roomId);
-        });
-        socket.on("sendMessage", async ({firstName, lastName, userId, targetUserId, text}) => {
+        socket.on("joinChat", async ({targetUserId}) => {
             try{
-                const roomId = getSecretRoomId(userId, targetUserId);
-                console.log(firstName + " " + text);
+                if(!(await areConnected(userId, targetUserId))) return;
 
-                // TODO: Check if userId and targetUserId are friends 
-                // ConnectionRequest.findOne({fromUserId: userId, toUserId: targetUserId, status: "accepted"}) 
+                const roomId = getSecretRoomId(userId, targetUserId);
+                console.log(socket.user.firstName + " joined room " + roomId);
+                socket.join(roomId);
+            }
+            catch(err){
+                console.log(err);
+            }
+        });
+
+        socket.on("sendMessage", async ({targetUserId, text}) => {
+            try{
+                text = typeof text === "string" ? text.trim() : "";
+                if(!text) return;
+
+                if(!(await areConnected(userId, targetUserId))) return;
+
+                const roomId = getSecretRoomId(userId, targetUserId);
 
                 let chat = await Chat.findOne({
                     participants: { $all: [userId, targetUserId]},
@@ -46,20 +88,20 @@ const initializeSocket = (server) => {
                 });
 
                 await chat.save();
-                io.to(roomId).emit("messageReceived", {firstName, lastName, text});
+
+                const savedMessage = chat.messages[chat.messages.length - 1];
+                io.to(roomId).emit("messageReceived", {
+                    firstName: socket.user.firstName,
+                    lastName: socket.user.lastName,
+                    text,
+                    timestamp: savedMessage.createdAt,
+                });
             }
             catch(err){
                 console.log(err);
             }
         });
-        socket.on("disconnect", () => {
-
-        });
     });
 };
 
 module.exports = initializeSocket;
-
-
-
-

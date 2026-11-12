@@ -17,7 +17,7 @@ const chatRouter = require("./routes/chat");
 
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
         credentials: true,
     })
@@ -38,7 +38,7 @@ connectDB()
 .then(() => {
     console.log("Database Connected Successfully...");
     server.listen(process.env.PORT, () => {
-        console.log("Server is listening successfully on port 3000");
+        console.log("Server is listening successfully on port " + process.env.PORT);
     });
 })
 .catch(err => {

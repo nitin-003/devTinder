@@ -3,6 +3,7 @@ const authRouter = express.Router();
 const {validateSignUpData} = require("../utils/validation");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const {getCookieOptions} = require("../utils/cookie");
 
 authRouter.post("/signup", async (req, res) => {
     try{
@@ -19,7 +20,7 @@ authRouter.post("/signup", async (req, res) => {
         const savedUser = await user.save();
         const token = await savedUser.getJWT();
 
-        res.cookie("token", token, {expires: new Date(Date.now() + 8 * 3600000), httpOnly:true, secure: true});
+        res.cookie("token", token, {...getCookieOptions(), expires: new Date(Date.now() + 8 * 3600000)});
         
         res.json({message: "User added successfully!!", data: savedUser })
     }
@@ -42,7 +43,7 @@ authRouter.post("/login", async (req, res) => {
         if(isPasswordValid){
             const token = await user.getJWT();
 
-            res.cookie("token", token, {expires: new Date(Date.now() + 8 * 3600000)});
+            res.cookie("token", token, {...getCookieOptions(), expires: new Date(Date.now() + 8 * 3600000)});
             res.send(user);
             // res.send("Login Successful!!");
         }
@@ -56,7 +57,7 @@ authRouter.post("/login", async (req, res) => {
 });
 
 authRouter.post("/logout", async (req, res) => {
-    res.cookie("token", null, {expires: new Date(Date.now())});
+    res.clearCookie("token", getCookieOptions());
 
     res.send("Logout Successful!!");
 });

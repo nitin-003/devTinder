@@ -23,7 +23,8 @@ const userAuth = async (req, res, next) => {
         next();
     }
     catch(err){
-        res.status(400).send("ERROR: " + err.message);
+        // Invalid/expired token or missing user: the frontend logs out on 401
+        res.status(401).send("ERROR: " + err.message);
     }
 };
 

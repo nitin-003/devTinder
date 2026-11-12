@@ -54,6 +54,8 @@ const userSchema = new mongoose.Schema(
         photoUrl: {
             type: String,
             default: "https://www.pngall.com/wp-content/uploads/5/Profile-Male-Transparent.png",
+            // An empty string (user cleared the field) falls back to "no photo"
+            set: (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
             validate(value){
                 if(!validator.isURL(value)){
                     throw new Error("Invalid photo URL: " + value);
@@ -70,6 +72,13 @@ const userSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
+        toJSON: {
+            // Never send the password hash to the client
+            transform(doc, ret) {
+                delete ret.password;
+                return ret;
+            },
+        },
     }
 );
 
@@ -77,7 +86,7 @@ userSchema.index({firstName: 1});
 
 userSchema.methods.getJWT = async function(){
     const user = this;
-    const token = await jwt.sign({_id: user._id}, "DEV@TINDER$790", {expiresIn: "1d"});
+    const token = await jwt.sign({_id: user._id}, process.env.JWT_SECRET, {expiresIn: "1d"});
 
     return token;
 };
